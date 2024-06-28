@@ -1,0 +1,128 @@
+// Users Collection
+db.users.insertMany([
+    {
+        user_id: 1,
+        name: "John Doe",
+        email: "john@example.com",
+        role: "student"
+    },
+    // Additional users...
+]);
+
+// Codekata Collection
+db.codekata.insertMany([
+    {
+        user_id: 1,
+        problems_solved: 120
+    },
+    // Additional records...
+]);
+
+// Attendance Collection
+db.attendance.insertMany([
+    {
+        user_id: 1,
+        date: ISODate("2020-10-16"),
+        status: "present"
+    },
+    // Additional records...
+]);
+
+// Topics Collection
+db.topics.insertMany([
+    {
+        topic_id: 1,
+        title: "MongoDB Basics",
+        date: ISODate("2020-10-10")
+    },
+    // Additional records...
+]);
+
+// Tasks Collection
+db.tasks.insertMany([
+    {
+        task_id: 1,
+        title: "Database Design",
+        date: ISODate("2020-10-12"),
+        status: "submitted",
+        user_id: 1
+    },
+    // Additional records...
+]);
+
+// Company Drives Collection
+db.company_drives.insertMany([
+    {
+        drive_id: 1,
+        company_name: "TechCorp",
+        date: ISODate("2020-10-20"),
+        students_appeared: [1, 2]
+    },
+    // Additional records...
+]);
+
+// Mentors Collection
+db.mentors.insertMany([
+    {
+        mentor_id: 1,
+        name: "Jane Smith",
+        mentee_count: 20
+    },
+    // Additional records...
+]);
+
+
+Queries
+Find all the topics and tasks which are taught in the month of October:
+db.topics.find({
+    date: {
+        $gte: ISODate("2020-10-01"),
+        $lt: ISODate("2020-11-01")
+    }
+});
+
+db.tasks.find({
+    date: {
+        $gte: ISODate("2020-10-01"),
+        $lt: ISODate("2020-11-01")
+    }
+});
+Find all the company drives which appeared between 15 Oct 2020 and 31 Oct 2020:
+db.company_drives.find({
+    date: {
+        $gte: ISODate("2020-10-15"),
+        $lt: ISODate("2020-11-01")
+    }
+});
+Find all the company drives and students who appeared for the placement:
+db.company_drives.find({}, { company_name: 1, date: 1, students_appeared: 1 });
+
+Find the number of problems solved by the user in codekata:
+db.codekata.aggregate([
+    {
+        $group: {
+            _id: "$user_id",
+            total_problems_solved: { $sum: "$problems_solved" }
+        }
+    }
+]);
+Find all the mentors who have more than 15 mentees:
+db.mentors.find({ mentee_count: { $gt: 15 } });
+
+Find the number of users who are absent and task is not submitted between 15 Oct 2020 and 31 Oct 2020:
+// Find absent users
+const absentUsers = db.attendance.find({
+    date: { $gte: ISODate("2020-10-15"), $lt: ISODate("2020-11-01") },
+    status: "absent"
+}).map(user => user.user_id);
+
+// Find users who did not submit tasks
+const nonSubmittedTasks = db.tasks.find({
+    date: { $gte: ISODate("2020-10-15"), $lt: ISODate("2020-11-01") },
+    status: "not submitted"
+}).map(task => task.user_id);
+
+// Find users who are absent and did not submit tasks
+const usersAbsentAndNonSubmittedTasks = absentUsers.filter(user_id => nonSubmittedTasks.includes(user_id)).length;
+
+print("Number of users who are absent and did not submit tasks:", usersAbsentAndNonSubmittedTasks);
